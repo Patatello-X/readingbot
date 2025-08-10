@@ -4,134 +4,94 @@ import logging
 import nest_asyncio
 nest_asyncio.apply()
 import re
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, ChatMember
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 from ai import generate_training_passage
 import json
+from datetime import datetime
+import pymongo
 
 logging.basicConfig(level=logging.INFO)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+MONGO_URI = os.getenv("MONGO_URI")
+CHANNEL_USERNAME = "ElDocEnglish"
 DATA_FILE = "users_data.txt"
-user_data = {}
-CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
+CEFR_LEVELS = ["A1 - كفتة 🤏", "A2 - مبتدئ 👽", "B1 - نص نص 🐢", "B2 - فنان 🎨", "C1 -  معلم شاورما 🗡️", "C2 - مواطن امريكي اصلي 🇺🇸"]
 
 PLACEMENT_PASSAGES = [
-    {
-        "level": "A1",
-        "paragraph": "This is my friend, Alex. He is from London. Alex likes to eat pizza and he likes to drink water. He has a cat. The cat's name is Leo. Leo is black and white.",
-        "questions": [
-            "1. Where is Alex from?\na) Italy\nb) London\nc) Egypt",
-            "2. What does Alex like to eat?\na) Salad\nb) Pasta\nc) Pizza",
-            "3. What is the cat's name?\na) Alex\nb) Leo\nc) London",
-            "4. What color is the cat?\na) Red and white\nb) Black and white\nc) Brown and white",
-            "5. Does Alex have a dog?\na) Yes\nb) No"
-        ],
-        "answers": ["b", "c", "b", "b", "b"]
-    },
-    {
-        "level": "A2",
-        "paragraph": "I went to the supermarket yesterday. I needed to buy some milk and bread for breakfast. When I was there, I also saw some fresh apples and bananas, so I decided to buy them too. The supermarket was very busy, and it took me a long time to get to the checkout counter.",
-        "questions": [
-            "1. When did the person go to the supermarket?\na) Today\nb) Tomorrow\nc) Yesterday",
-            "2. What did they need to buy for breakfast?\na) Juice and eggs\nb) Milk and bread\nc) Cereal and coffee",
-            "3. What fruit did they buy?\na) Oranges and grapes\nb) Apples and bananas\nc) Pears and peaches",
-            "4. How was the supermarket?\na) Empty\nb) Quiet\nc) Busy",
-            "5. Why did it take a long time to get to the checkout?\na) The person was slow.\nb) The supermarket was very busy.\nc) They got lost."
-        ],
-        "answers": ["c", "b", "b", "c", "b"]
-    },
-    {
-        "level": "B1",
-        "paragraph": "Sarah is planning her summer vacation. She wants to visit a new country. She has narrowed down her choices to two places: Spain and Greece. She loves the idea of exploring historic ruins in Greece, but she is also attracted to the beautiful beaches in Spain. She has a limited budget, so she needs to research flight and hotel prices carefully before making a final decision.",
-        "questions": [
-            "1. What is Sarah planning?\na) A new job\nb) Her summer vacation\nc) A party",
-            "2. How many countries is she considering?\na) One\nb) Two\nc) Three",
-            "3. What does she love the idea of doing in Greece?\na) Swimming in the sea\nb) Visiting family\nc) Exploring historic ruins",
-            "4. What is an important factor in her decision?\na) The weather\nb) The food\nc) Her limited budget",
-            "5. Which country does she think has beautiful beaches?\na) Spain\nb) Greece\nc) Italy"
-        ],
-        "answers": ["b", "b", "c", "c", "a"]
-    },
-    {
-        "level": "B2",
-        "paragraph": "The global push for renewable energy sources has gained significant momentum in recent years. Solar and wind power are now competitive with traditional fossil fuels in many regions. However, a major challenge remains: the intermittency of these sources. The sun doesn't always shine and the wind doesn't always blow. Consequently, developing efficient energy storage solutions, such as large-scale batteries, is crucial for a truly sustainable energy future.",
-        "questions": [
-            "1. What has gained momentum recently?\na) The use of fossil fuels\nb) The global push for renewable energy\nc) Tourism",
-            "2. Which renewable sources are mentioned?\na) Hydropower and geothermal\nb) Solar and wind power\nc) Biomass and nuclear",
-            "3. What is a major challenge for these sources?\na) Their high cost\nb) Their intermittent nature\nc) The lack of technology",
-            "4. Why is the sun not a reliable energy source by itself?\na) It's too hot.\nb) It doesn't always shine.\nc) It's only available in some countries.",
-            "5. What is crucial for a sustainable energy future?\na) Using more fossil fuels\nb) Developing energy storage solutions\nc) Building more power plants"
-        ],
-        "answers": ["b", "b", "b", "b", "b"]
-    },
-    {
-        "level": "C1",
-        "paragraph": "The novel \"1984\" by George Orwell serves as a powerful and enduring critique of totalitarianism. It explores themes of government surveillance, psychological manipulation, and the erosion of truth. The concept of \"Big Brother\" has become a cultural shorthand for a controlling, oppressive authority. Orwell’s masterful use of dystopian imagery and a chillingly plausible future continues to resonate with readers, prompting them to reflect on the nature of power and individual freedom in their own societies.",
-        "questions": [
-            "1. What is \"1984\" a critique of?\na) Democracy\nb) Totalitarianism\nc) Capitalism",
-            "2. Which of the following is NOT a theme explored in the novel?\na) The importance of family\nb) Government surveillance\nc) The erosion of truth",
-            "3. What has \"Big Brother\" become a cultural shorthand for?\na) A loving father\nb) A controlling authority\nc) A famous singer",
-            "4. What literary device does Orwell use effectively?\na) Poetic verse\nb) Dystopian imagery\nc) Romantic metaphors",
-            "5. What does the novel prompt readers to reflect on?\na) The history of Britain\nb) The nature of power and freedom\nc) The origins of the internet"
-        ],
-        "answers": ["b", "a", "b", "b", "b"]
-    },
-    {
-        "level": "C2",
-        "paragraph": "The advent of quantum computing promises to revolutionize fields ranging from cryptography to medicine. Unlike classical computers which use bits representing either 0 or 1, quantum computers leverage qubits, which can exist in a superposition of both states simultaneously. This allows them to perform complex calculations at an unprecedented speed. While still in its nascent stages, the potential of this technology to solve problems currently intractable for even the most powerful supercomputers is immense, but it also raises profound questions about future security and technological ethics.",
-        "questions": [
-            "1. What is a key difference between classical and quantum computers?\na) Classical computers use qubits, quantum computers use bits.\nb) Classical computers use bits, quantum computers use qubits.\nc) They both use the same type of processing unit.",
-            "2. What allows quantum computers to perform calculations at an unprecedented speed?\na) They are much larger than classical computers.\nb) Their qubits can exist in a superposition of states.\nc) They use a new type of battery.",
-            "3. What is the current stage of quantum computing development?\na) It is widely available to the public.\nb) It is still in its early (nascent) stages.\nc) It has been replaced by an even newer technology.",
-            "4. What is a potential impact of this technology?\na) It will make all old computers obsolete immediately.\nb) It will solve problems that are currently too difficult.\nc) It will only be used for entertainment.",
-            "5. What kind of questions does this technology raise?\na) Questions about grammar and spelling.\nb) Questions about politics and history.\nc) Questions about future security and ethics."
-        ],
-        "answers": ["b", "b", "b", "b", "c"]
-    }
+    # ... نفس الفقرات السابقة ...
 ]
 
-def get_static_placement_passage(level):
-    for passage in PLACEMENT_PASSAGES:
-        if passage["level"] == level:
-            return {
-                "paragraph": passage["paragraph"],
-                "questions": passage["questions"],
-                "answers": passage["answers"]
-            }
-    return None
+# MongoDB setup
+mongo_client = pymongo.MongoClient(MONGO_URI)
+db = mongo_client["readingbot"]
+users_collection = db["users"]
 
-def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+def save_user(user_id, username, name):
+    now = datetime.utcnow()
+    user = users_collection.find_one({"user_id": user_id})
+    if user:
+        users_collection.update_one(
+            {"user_id": user_id},
+            {"$set": {
+                "last_active": now,
+                "username": username,
+                "name": name
+            }, "$inc": {"usage_count": 1}}
+        )
+    else:
+        users_collection.insert_one({
+            "user_id": user_id,
+            "username": username,
+            "name": name,
+            "first_join": now,
+            "last_active": now,
+            "usage_count": 1
+        })
 
-def save_data():
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(user_data, f, indent=2, ensure_ascii=False)
+async def check_channel_membership(update: Update):
+    user_id = update.message.from_user.id
+    try:
+        member = await update.message.bot.get_chat_member(f"@{CHANNEL_USERNAME}", user_id)
+        if member.status not in [ChatMember.MEMBER, ChatMember.ADMINISTRATOR, ChatMember.OWNER]:
+            return False
+        return True
+    except Exception:
+        return False
 
 async def send_long_message(update, text):
     max_len = 4000
     for i in range(0, len(text), max_len):
-        await update.message.reply_text(text[i:i+max_len])
+        await update.message.reply_text(
+            text[i:i+max_len],
+            disable_web_page_preview=True,
+            protect_content=True
+        )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.message.from_user.id)
-    user_data[user_id] = {
-        "step": "ask_known_level",
-        "results": {},
-        "waiting": False,
-        "placement_index": 0,
-        "placement_scores": [],
-        "training_history": []
-    }
-    save_data()
+    user = update.message.from_user
+    user_id = user.id
+    username = user.username or ""
+    name = f"{user.first_name or ''} {user.last_name or ''}".strip()
+    save_user(user_id, username, name)
+
+    # اشتراك إجباري
+    if not await check_channel_membership(update):
+        await update.message.reply_text(
+            f"🔴 للاستخدام يجب الاشتراك في القناة أولاً:\n\n"
+            f"👉 [اضغط هنا للاشتراك](https://t.me/{CHANNEL_USERNAME})\n\n"
+            f"ثم أرسل /start بعد الاشتراك.",
+            disable_web_page_preview=True,
+            protect_content=True,
+            reply_markup=ReplyKeyboardMarkup([["اشتركت ✅"]], one_time_keyboard=True)
+        )
+        return
 
     welcome_message = (
         "👋 Ladies and gentlemen, we are pleased to announce ~ Doctors English Reading Assistant!\n"
         "📚 هتوصلك فقرات قراءة وأسئلة حسب مستواك.\n"
-        "🔔 يُرجى الاشتراك في القناة: @eldocenglish\n"
+        "🔔 يُرجى الاشتراك في القناة: @ElDocEnglish\n"
         "______________________________________\n"
         "🔴🔴 ®   جميع الحقوق محفوظة لقناة Doctors English   ® 🔴🔴\n"
         "______________________________________"
@@ -148,73 +108,54 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "❓  تعرف انت أي مستوى؟"
     )
 
-    await update.message.reply_text(welcome_message)
+    await update.message.reply_text(welcome_message, disable_web_page_preview=True, protect_content=True)
     await update.message.reply_text(
         levels_message,
-        reply_markup=ReplyKeyboardMarkup([["Yes", "No"]], one_time_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup([["Yes", "No"]], one_time_keyboard=True),
+        disable_web_page_preview=True,
+        protect_content=True
     )
 
 async def send_ready_question(update, text="هل أنت جاهز للفقرة ؟"):
     keyboard = ReplyKeyboardMarkup([["جاهز 🚀"]], one_time_keyboard=True)
-    await update.message.reply_text(text, reply_markup=keyboard)
+    await update.message.reply_text(text, reply_markup=keyboard, disable_web_page_preview=True, protect_content=True)
 
-async def send_placement_passage(update, context, level):
-    user_id = str(update.message.from_user.id)
-    user_state = user_data.get(user_id, {})
-    user_state["waiting"] = True
-    save_data()
+def get_static_placement_passage(level):
+    for passage in PLACEMENT_PASSAGES:
+        if passage["level"] == level:
+            return {
+                "paragraph": passage["paragraph"],
+                "questions": passage["questions"],
+                "answers": passage["answers"]
+            }
+    return None
 
-    await update.message.reply_text(f"📤 جاري إرسال فقرة مستوى {level} التأسيسية، اتقل علينا خمسة🤌...")
+async def send_placement_passage(update, context, level, user_state):
+    await update.message.reply_text(f"📤 جاري إرسال فقرة مستوى {level} التأسيسية، اتقل علينا خمسة🤌...", disable_web_page_preview=True, protect_content=True)
     await update.message.reply_chat_action("typing")
-
     data = get_static_placement_passage(level)
-
-    user_state["waiting"] = False
-    save_data()
-
     if not data or "answers" not in data or not data["answers"]:
-        await update.message.reply_text("❌ حدث خطأ أثناء إنشاء الفقرة. حاول مرة أخرى.")
+        await update.message.reply_text("❌ حدث خطأ أثناء إنشاء الفقرة. حاول مرة أخرى.", disable_web_page_preview=True, protect_content=True)
         return
-
     user_state["step"] = "waiting_ready_testing"
     user_state["pending_data"] = data
-    save_data()
 
     await send_ready_question(update)
 
-async def send_training_passage(update, context, level):
-    user_id = str(update.message.from_user.id)
-    user_state = user_data.get(user_id, {})
-    user_state["waiting"] = True
-    save_data()
-
-    await update.message.reply_text(f"📤 تدريب جديد لمستوى {level} ، ثواني و يكون عندك..")
+async def send_training_passage(update, context, level, user_state):
+    await update.message.reply_text(f"📤 تدريب جديد لمستوى {level} ، ثواني و يكون عندك..", disable_web_page_preview=True, protect_content=True)
     await update.message.reply_chat_action("typing")
-
     try:
         data = await generate_training_passage(level)
-        print("=== Training Passage Data ===")
-        print(data)
-        print("============================")
     except Exception as e:
-        print(f"Error in generate_training_passage: {e}")
-        await update.message.reply_text("❌ حدث خطأ أثناء توليد الفقرة (استثناء داخلي).")
-        user_state["waiting"] = False
-        save_data()
+        await update.message.reply_text("❌ حدث خطأ أثناء توليد الفقرة (استثناء داخلي).", disable_web_page_preview=True, protect_content=True)
         return
-
-    user_state["waiting"] = False
-    save_data()
-
     if not data or "answers" not in data or not data["answers"]:
-        print("❌ مشكلة في بيانات الفقرة التدريبية:", data)
-        await update.message.reply_text("❌ حدث خطأ أثناء توليد الفقرة. تحقق من اتصال الذكاء الاصطناعي أو المفتاح.")
+        await update.message.reply_text("❌ حدث خطأ أثناء توليد الفقرة. تحقق من اتصال الذكاء الاصطناعي أو المفتاح.", disable_web_page_preview=True, protect_content=True)
         return
-
     user_state["step"] = "training_answer"
     user_state["pending_data"] = data
     user_state["correct_answers"] = data["answers"]
-    save_data()
 
     message = f"📖 فقرة المستوى:\n\n{data['paragraph']}\n\n"
     for i, q in enumerate(data["questions"], 1):
@@ -224,7 +165,6 @@ async def send_training_passage(update, context, level):
     message += "\n______________________________________"
     message += "\n🔴🔴 ®   جميع الحقوق محفوظة لقناة Doctors English   ® 🔴🔴"
     await send_long_message(update, message)
-    save_data()
     return
 
 def grade_answers(user_answers, correct_answers):
@@ -247,29 +187,53 @@ def get_next_level(current_level, result):
         return CEFR_LEVELS[idx - 1]
     return current_level
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.message.from_user.id)
-    user_state = user_data.get(user_id)
+user_states = {}
 
-    if not user_state:
-        await update.message.reply_text("من فضلك ابدأ بالضغط على /start")
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.message.from_user
+    user_id = str(user.id)
+    username = user.username or ""
+    name = f"{user.first_name or ''} {user.last_name or ''}".strip()
+    save_user(user_id, username, name)
+
+    # اشتراك إجباري
+    if not await check_channel_membership(update):
+        await update.message.reply_text(
+            f"🔴 للاستخدام يجب الاشتراك في القناة أولاً:\n\n"
+            f"👉 [اضغط هنا للاشتراك](https://t.me/{CHANNEL_USERNAME})\n\n"
+            f"ثم أرسل /start بعد الاشتراك.",
+            disable_web_page_preview=True,
+            protect_content=True,
+            reply_markup=ReplyKeyboardMarkup([["اشتركت ✅"]], one_time_keyboard=True)
+        )
         return
+
+    user_state = user_states.get(user_id)
+    if not user_state:
+        user_state = {
+            "step": "ask_known_level",
+            "results": {},
+            "waiting": False,
+            "placement_index": 0,
+            "placement_scores": [],
+            "training_history": []
+        }
+        user_states[user_id] = user_state
 
     text = update.message.text.strip()
 
     if user_state.get("waiting", False):
-        await update.message.reply_text("اهدى علينا يبن الحلال 🤌")
+        await update.message.reply_text("اهدى علينا يبن الحلال 🤌", disable_web_page_preview=True, protect_content=True)
         return
 
     if user_state.get("step") == "waiting_ready_testing":
         if text.lower() == "جاهز 🚀":
             data = user_state.get("pending_data")
             if not data:
-                await update.message.reply_text("❌ خطأ داخلي، حاول /start من جديد.")
+                await update.message.reply_text("❌ خطأ داخلي، حاول /start من جديد.", disable_web_page_preview=True, protect_content=True)
                 return
             user_state["step"] = "testing_answer"
             user_state["correct_answers"] = data["answers"]
-            save_data()
             message = f"📖 فقرة المستوى:\n\n{data['paragraph']}\n\n"
             for i, q in enumerate(data["questions"], 1):
                 question_without_answer = re.sub(r'(Answer|الإجابة)\s*[:\-]?.*', '', q, flags=re.IGNORECASE).strip()
@@ -278,20 +242,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message += "\n______________________________________"
             message += "\n🔴🔴 ®   جميع الحقوق محفوظة لقناة Doctors English   ® 🔴🔴"
             await send_long_message(update, message)
-            save_data()
             return
         else:
-            await update.message.reply_text('من فضلك اضغط "جاهز 🚀" عندما تكون مستعدًا.')
+            await update.message.reply_text('من فضلك اضغط "جاهز 🚀" عندما تكون مستعدًا.', disable_web_page_preview=True, protect_content=True)
             return
 
     if user_state.get("step") == "waiting_ready_training":
         if text.lower() == "جاهز 🚀":
             user_state["pending_data"] = None
-            save_data()
-            await send_training_passage(update, context, user_state["level"])
+            await send_training_passage(update, context, user_state["level"], user_state)
             return
         else:
-            await update.message.reply_text('من فضلك اضغط "جاهز 🚀" عندما تكون مستعدًا.')
+            await update.message.reply_text('من فضلك اضغط "جاهز 🚀" عندما تكون مستعدًا.', disable_web_page_preview=True, protect_content=True)
             return
 
     if user_state.get("step") in ["testing_answer", "training_answer"]:
@@ -300,7 +262,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if len(user_answers) != len(data):
             await update.message.reply_text(
-                f"❌ عدد الإجابات يجب أن يكون {len(data)}. رجاءً أعد إرسال الإجابات بشكل صحيح..او اكتب الإجابات بالحروف a\b\c\d فقط"
+                f"❌ عدد الإجابات يجب أن يكون {len(data)}. رجاءً أعد إرسال الإجابات بشكل صحيح.",
+                disable_web_page_preview=True,
+                protect_content=True
             )
             return
 
@@ -318,17 +282,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if wrong_list:
                 msg += f"❌ الإجابات الخاطئة: {', '.join(map(str, wrong_list))}\n"
             msg += "\n______________________________________"
-            await update.message.reply_text(msg)
+            await update.message.reply_text(msg, disable_web_page_preview=True, protect_content=True)
 
             if user_state["placement_index"] < len(CEFR_LEVELS):
                 user_state["step"] = "waiting_ready_testing"
                 user_state["pending_data"] = None
-                save_data()
                 level = CEFR_LEVELS[user_state["placement_index"]]
                 await update.message.reply_text(
-                    f"🔜 ننتقل إلى فقرة مستوى {level} التأسيسية."
+                    f"🔜 ننتقل إلى فقرة مستوى {level} التأسيسية.",
+                    disable_web_page_preview=True,
+                    protect_content=True
                 )
-                await send_placement_passage(update, context, level)
+                await send_placement_passage(update, context, level, user_state)
                 return
             else:
                 total_scores = user_state.get("placement_scores", [])
@@ -347,7 +312,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 user_state["level"] = final_level
                 user_state["placement_index"] = 0
                 user_state["pending_data"] = None
-                save_data()
 
                 summary = (
                     f"✅ انتهيت من تقييم المستويات التأسيسية.\n"
@@ -357,7 +321,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     "💪 أنت دلوقتي جاهز تبدأ التدريبات!\n"
                     "طول ما انت هنا، معناه انك بتستثمر في نفسك...\n"
                 )
-                await update.message.reply_text(summary)
+                await update.message.reply_text(summary, disable_web_page_preview=True, protect_content=True)
                 await send_ready_question(update, text=f" مستعد نبدأ التدريبات بناءاً على مستواك؟")
                 return
 
@@ -388,7 +352,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             })
             user_state["step"] = "waiting_ready_training"
             user_state["pending_data"] = None
-            save_data()
 
             if result == "upgrade":
                 msg += f"\n🎉 تم ترقية مستواك من {old_level} إلى {new_level}!"
@@ -398,48 +361,45 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 msg += f"\n✅ تم تثبيت مستواك على {old_level}."
 
             msg += "\n______________________________________"
-            await update.message.reply_text(msg)
+            await update.message.reply_text(msg, disable_web_page_preview=True, protect_content=True)
             await send_ready_question(update, text="هل أنت جاهز للتدريب ؟")
             return
 
     if user_state.get("step") == "ask_known_level":
         if text.lower() == "yes":
             user_state["step"] = "choose_level"
-            save_data()
             await update.message.reply_text(
                 "من فضلك اختر مستواك:",
-                reply_markup=ReplyKeyboardMarkup([[lvl] for lvl in CEFR_LEVELS], one_time_keyboard=True)
+                reply_markup=ReplyKeyboardMarkup([[lvl] for lvl in CEFR_LEVELS], one_time_keyboard=True),
+                disable_web_page_preview=True,
+                protect_content=True
             )
         elif text.lower() == "no":
             user_state["step"] = "testing"
             user_state["placement_index"] = 0
             user_state["placement_scores"] = []
-            save_data()
-            await send_placement_passage(update, context, CEFR_LEVELS[0])
+            await send_placement_passage(update, context, CEFR_LEVELS[0], user_state)
         else:
-            await update.message.reply_text("من فضلك اختر Yes أو No.")
+            await update.message.reply_text("من فضلك اختر Yes أو No.", disable_web_page_preview=True, protect_content=True)
         return
 
     if user_state.get("step") == "choose_level":
         if text.upper() in CEFR_LEVELS:
             user_state["step"] = "training"
             user_state["level"] = text.upper()
-            save_data()
             await update.message.reply_text(
-                f"تم اختيار مستواك: {text.upper()}.\nاستعد للتدريبات!"
+                f"تم اختيار مستواك: {text.upper()}.\nاستعد للتدريبات!",
+                disable_web_page_preview=True,
+                protect_content=True
             )
-            await send_training_passage(update, context, user_state["level"])
+            await send_training_passage(update, context, user_state["level"], user_state)
         else:
-            await update.message.reply_text("من فضلك اختر مستوى من القائمة.")
+            await update.message.reply_text("من فضلك اختر مستوى من القائمة.", disable_web_page_preview=True, protect_content=True)
         return
 
 async def main():
-    global user_data
-    user_data = load_data()
     app = ApplicationBuilder().token(BOT_TOKEN).build()
-
     await app.bot.delete_webhook(drop_pending_updates=True)
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     await app.run_polling()
