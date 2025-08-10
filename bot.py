@@ -211,11 +211,21 @@ async def send_training_passage(update, context, level):
         await update.message.reply_text("❌ حدث خطأ أثناء توليد الفقرة. تحقق من اتصال الذكاء الاصطناعي أو المفتاح.")
         return
 
-    user_state["step"] = "waiting_ready_training"
+    user_state["step"] = "training_answer"
     user_state["pending_data"] = data
+    user_state["correct_answers"] = data["answers"]
     save_data()
 
-    await send_ready_question(update, text=" جاهز للتدريب؟")
+    message = f"📖 فقرة المستوى:\n\n{data['paragraph']}\n\n"
+    for i, q in enumerate(data["questions"], 1):
+        question_without_answer = re.sub(r'(Answer|الإجابة)\s*[:\-]?.*', '', q, flags=re.IGNORECASE).strip()
+        message += f"{question_without_answer}\n\n"
+    message += "\n📩 أرسل إجاباتك كحروف (مثال: a b c b a)"
+    message += "\n______________________________________"
+    message += "\n🔴🔴 ®   جميع الحقوق محفوظة لقناة Doctors English   ® 🔴🔴"
+    await send_long_message(update, message)
+    save_data()
+    return
 
 def grade_answers(user_answers, correct_answers):
     score = 0
@@ -251,32 +261,34 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("اهدى علينا يبن الحلال 🤌")
         return
 
-    if user_state.get("step") in ["waiting_ready_testing", "waiting_ready_training"]:
+    if user_state.get("step") == "waiting_ready_testing":
         if text.lower() == "جاهز 🚀":
             data = user_state.get("pending_data")
             if not data:
                 await update.message.reply_text("❌ خطأ داخلي، حاول /start من جديد.")
                 return
-
-            if user_state["step"] == "waiting_ready_testing":
-                user_state["step"] = "testing_answer"
-            else:
-                user_state["step"] = "training_answer"
-
+            user_state["step"] = "testing_answer"
             user_state["correct_answers"] = data["answers"]
             save_data()
-
             message = f"📖 فقرة المستوى:\n\n{data['paragraph']}\n\n"
-            # حذف أي جزء فيه "Answer:" أو "الإجابة:" من كل سؤال
             for i, q in enumerate(data["questions"], 1):
                 question_without_answer = re.sub(r'(Answer|الإجابة)\s*[:\-]?.*', '', q, flags=re.IGNORECASE).strip()
                 message += f"{question_without_answer}\n\n"
             message += "\n📩 أرسل إجاباتك كحروف (مثال: a b c b a)"
             message += "\n______________________________________"
             message += "\n🔴🔴 ®   جميع الحقوق محفوظة لقناة Doctors English   ® 🔴🔴"
-
             await send_long_message(update, message)
             save_data()
+            return
+        else:
+            await update.message.reply_text('من فضلك اضغط "جاهز 🚀" عندما تكون مستعدًا.')
+            return
+
+    if user_state.get("step") == "waiting_ready_training":
+        if text.lower() == "جاهز 🚀":
+            user_state["pending_data"] = None
+            save_data()
+            await send_training_passage(update, context, user_state["level"])
             return
         else:
             await update.message.reply_text('من فضلك اضغط "جاهز 🚀" عندما تكون مستعدًا.')
@@ -288,7 +300,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if len(user_answers) != len(data):
             await update.message.reply_text(
-                f"❌ عدد الإجابات يجب أن يكون {len(data)}. رجاءً أعد إرسال الإجابات بشكل صحيح."
+                f"❌ عدد الإجابات يجب أن يكون {len(data)}. رجاءً أعد إرسال الإجابات بشكل صحيح..او اكتب الإجابات بالحروف a\b\c\d فقط"
             )
             return
 
