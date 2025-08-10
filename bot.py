@@ -215,7 +215,7 @@ async def send_training_passage(update, context, level):
     user_state["pending_data"] = data
     save_data()
 
-    await send_ready_question(update, text=" جاهز للتدريب التالي؟")
+    await send_ready_question(update, text=" جاهز للتدريب؟")
 
 def grade_answers(user_answers, correct_answers):
     score = 0
@@ -387,7 +387,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             msg += "\n______________________________________"
             await update.message.reply_text(msg)
-            await send_ready_question(update, text="هل أنت جاهز للتدريب التالي؟")
+            await send_ready_question(update, text="هل أنت جاهز للتدريب ؟")
             return
 
     if user_state.get("step") == "ask_known_level":
