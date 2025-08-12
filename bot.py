@@ -17,8 +17,8 @@ logging.basicConfig(level=logging.INFO)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
 CHANNEL_USERNAME = "ElDocEnglish"
-CEFR_LEVELS = ["A1 - كفتة 🤏", "A2 - مبتدئ 👽", "B1 - نص نص 🐢", "B2 - فنان 🎨", "C1 -  معلم شاورما 🗡️", "C2 - مواطن امريكي اصلي 🇺🇸"]
 ADMIN_ID = 5172743454
+CEFR_LEVELS = ["A1 - كفتة 🤏", "A2 - مبتدئ 👽", "B1 - نص نص 🐢", "B2 - فنان 🎨", "C1 -  معلم شاورما 🗡️", "C2 - مواطن امريكي اصلي 🇺🇸"]
 
 PLACEMENT_PASSAGES = [
     {
@@ -134,13 +134,21 @@ def get_all_user_ids():
 
 async def check_channel_membership(update: Update):
     user_id = update.message.from_user.id
-    try:
-        member = await update.message.bot.get_chat_member(f"@{CHANNEL_USERNAME}", user_id)
-        if member.status not in [ChatMember.MEMBER, ChatMember.ADMINISTRATOR, ChatMember.OWNER]:
-            return False
+    if user_id == ADMIN_ID:
         return True
-    except Exception:
+    # تحقق من أن اسم القناة يبدأ بـ @
+    channel_id = CHANNEL_USERNAME
+    if not channel_id.startswith("@"):
+        channel_id = "@" + channel_id
+    try:
+        member = await update.message.bot.get_chat_member(chat_id=channel_id, user_id=user_id)
+        if getattr(member, "status", None) in ["member", "administrator", "creator", "owner"]:
+            return True
         return False
+    except Exception as e:
+        logging.warning(f"check_channel_membership error: {e}")
+        # في حالة فشل التحقق لأي سبب (مشكلة تيليجرام)، اعتبره مشترك
+        return True
 
 async def safe_send(update, text, **kwargs):
     await asyncio.sleep(1.5)
@@ -258,7 +266,6 @@ async def send_placement_passage(update, context, level, user_state):
         return
     user_state["step"] = "waiting_ready_testing"
     user_state["pending_data"] = data
-
     await send_ready_question(update)
 
 async def send_training_passage(update, context, level, user_state):
@@ -537,4 +544,3 @@ if __name__ == "__main__":
             loop.run_forever()
         else:
             raise
-
