@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
 CHANNEL_USERNAME = "ElDocEnglish"
-CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
+CEFR_LEVELS = ["A1 - كفتة 🤏", "A2 - مبتدئ 👽", "B1 - نص نص 🐢", "B2 - فنان 🎨", "C1 -  معلم شاورما 🗡️", "C2 - مواطن امريكي اصلي 🇺🇸"]
 ADMIN_ID = 5172743454
 
 PLACEMENT_PASSAGES = [
@@ -537,3 +537,4 @@ if __name__ == "__main__":
             loop.run_forever()
         else:
             raise
+
