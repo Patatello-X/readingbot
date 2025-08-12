@@ -76,7 +76,7 @@ async def check_channel_membership(update: Update):
         return False
 
 async def safe_send(update, text, **kwargs):
-    await asyncio.sleep(1.5)  # مؤقت 1.5 ثانية قبل كل رسالة
+    await asyncio.sleep(1.5)
     await update.message.reply_text(
         text,
         disable_web_page_preview=True,
@@ -121,7 +121,7 @@ async def handle_broadcast_message(update: Update, context: ContextTypes.DEFAULT
                     parse_mode=ParseMode.HTML
                 )
                 count += 1
-                await asyncio.sleep(1.5)  # مؤقت بين كل رسالة
+                await asyncio.sleep(1.5)
             except Exception:
                 failed += 1
         await safe_send(update, f"✅ تم إرسال الإذاعة إلى {count} مستخدم.\n❌ فشل مع {failed} مستخدم.")
@@ -135,7 +135,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     name = f"{user.first_name or ''} {user.last_name or ''}".strip()
     save_user(user_id, username, name)
 
-    # اشتراك إجباري
     if not await check_channel_membership(update):
         await safe_send(
             update,
@@ -253,7 +252,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     name = f"{user.first_name or ''} {user.last_name or ''}".strip()
     save_user(user_id, username, name)
 
-    # اشتراك إجباري
     if not await check_channel_membership(update):
         await safe_send(
             update,
