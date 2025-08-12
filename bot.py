@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
 CHANNEL_USERNAME = "ElDocEnglish"
-CEFR_LEVELS = ["A1 - كفتة 🤏", "A2 - مبتدئ 👽", "B1 - نص نص 🐢", "B2 - فنان 🎨", "C1 -  معلم شاورما 🗡️", "C2 - مواطن امريكي اصلي 🇺🇸"]
+CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 ADMIN_ID = 5172743454
 
 PLACEMENT_PASSAGES = [
@@ -95,12 +95,12 @@ PLACEMENT_PASSAGES = [
     }
 ]
 
-# ========== دوال قاعدة البيانات (سوبابيز PostgreSQL) ==========
 def get_db_conn():
     return psycopg2.connect(SUPABASE_DB_URL, connect_timeout=10)
 
 def save_user(user_id, username, name):
     now = datetime.utcnow()
+    conn = None
     try:
         conn = get_db_conn()
         with conn.cursor() as cur:
@@ -114,20 +114,23 @@ def save_user(user_id, username, name):
               usage_count = users.usage_count + 1
             """, (int(user_id), username, name, now, now))
         conn.commit()
+    except Exception as e:
+        logging.error(f"Database error in save_user: {e}")
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 def get_all_user_ids():
-    conn = get_db_conn()
+    conn = None
     try:
+        conn = get_db_conn()
         with conn.cursor() as cur:
             cur.execute("SELECT user_id FROM users")
             users = cur.fetchall()
         return [row[0] for row in users]
     finally:
-        conn.close()
-
-# ========== دوال المساعد ==========
+        if conn:
+            conn.close()
 
 async def check_channel_membership(update: Update):
     user_id = update.message.from_user.id
@@ -152,8 +155,6 @@ async def send_long_message(update, text):
     max_len = 4000
     for i in range(0, len(text), max_len):
         await safe_send(update, text[i:i+max_len])
-
-# ========== دوال الإذاعة ==========
 
 broadcast_states = {}
 
@@ -189,8 +190,6 @@ async def handle_broadcast_message(update: Update, context: ContextTypes.DEFAULT
             except Exception:
                 failed += 1
         await safe_send(update, f"✅ تم إرسال الإذاعة إلى {count} مستخدم.\n❌ فشل مع {failed} مستخدم.")
-
-# ========== دوال البوت الرئيسية ==========
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
@@ -442,7 +441,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
 
         else:
-            # التدريب
             level = user_state.get("level", "A1")
             msg = f"✅ أجبت {score} من {len(data)} صحيحة.\n"
             if correct_list:
@@ -511,7 +509,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await safe_send(update, "من فضلك اختر مستوى من القائمة.")
         return
 
-# راوتر الإذاعة/الرسائل
 async def broadcast_router(update, context):
     user_id = update.message.from_user.id
     if broadcast_states.get(user_id):
@@ -519,7 +516,6 @@ async def broadcast_router(update, context):
     else:
         await handle_message(update, context)
 
-# ========== main ==========
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     await app.bot.delete_webhook(drop_pending_updates=True)
