@@ -18,7 +18,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
 CHANNEL_USERNAME = "ElDocEnglish"
 ADMIN_ID = 5172743454
-CEFR_LEVELS = ["A1 - كفتة 🤏", "A2 - مبتدئ 👽", "B1 - نص نص 🐢", "B2 - فنان 🎨", "C1 -  معلم شاورما 🗡️", "C2 - مواطن امريكي اصلي 🇺🇸"]
+CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
 PLACEMENT_PASSAGES = [
     {
@@ -136,7 +136,6 @@ async def check_channel_membership(update: Update):
     user_id = update.message.from_user.id
     if user_id == ADMIN_ID:
         return True
-    # تحقق من أن اسم القناة يبدأ بـ @
     channel_id = CHANNEL_USERNAME
     if not channel_id.startswith("@"):
         channel_id = "@" + channel_id
@@ -147,8 +146,7 @@ async def check_channel_membership(update: Update):
         return False
     except Exception as e:
         logging.warning(f"check_channel_membership error: {e}")
-        # في حالة فشل التحقق لأي سبب (مشكلة تيليجرام)، اعتبره مشترك
-        return True
+        return True  # نكمل لو في مشكلة من تيليجرام
 
 async def safe_send(update, text, **kwargs):
     await asyncio.sleep(1.5)
@@ -249,7 +247,7 @@ async def send_ready_question(update, text="هل أنت جاهز للفقرة ؟
 
 def get_static_placement_passage(level):
     for passage in PLACEMENT_PASSAGES:
-        if passage["level"] == level:
+        if passage["level"].strip().upper() == level.strip().upper():
             return {
                 "paragraph": passage["paragraph"],
                 "questions": passage["questions"],
@@ -262,11 +260,12 @@ async def send_placement_passage(update, context, level, user_state):
     await update.message.reply_chat_action("typing")
     data = get_static_placement_passage(level)
     if not data or "answers" not in data or not data["answers"]:
-        await safe_send(update, "❌ حدث خطأ أثناء إنشاء الفقرة. حاول مرة أخرى.")
+        await safe_send(update, "❌ حدث خطأ أثناء إنشاء الفقرة. حاول مرة أخرى. لو استمرت المشكلة كلم الدعم.")
         return
     user_state["step"] = "waiting_ready_testing"
     user_state["pending_data"] = data
     await send_ready_question(update)
+
 
 async def send_training_passage(update, context, level, user_state):
     await safe_send(update, f"📤 تدريب جديد لمستوى {level} ، ثواني و يكون عندك..")
