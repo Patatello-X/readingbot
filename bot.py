@@ -20,6 +20,9 @@ CHANNEL_USERNAME = "ElDocEnglish"
 ADMIN_ID = 5172743454
 CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
+if not BOT_TOKEN or not SUPABASE_DB_URL:
+    raise ValueError("BOT_TOKEN or SUPABASE_DB_URL are not set!")
+
 PLACEMENT_PASSAGES = [
     {
         "level": "A1",
@@ -215,12 +218,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     welcome_message = (
-        "👋 Ladies and gentlemen, we are pleased to announce ~ Doctors English Reading Assistant!\n"
-        "📚 هتوصلك فقرات قراءة وأسئلة حسب مستواك.\n"
-        "🔔 يُرجى الاشتراك في القناة: @ElDocEnglish\n"
-        "______________________________________\n"
-        "🔴🔴 ®   جميع الحقوق محفوظة لقناة Doctors English   ® 🔴🔴\n"
-        "______________________________________"
+        "===🔵~ DOCTORS ENGLISH ~🔵===\n"
+        "===🔵{READING ASSISTANT}🔵===\n"
+        "————————————————\n\n"
+        "🔹 في البوت تقدر تختبر و تعرف مستواك في اللغة\n"
+        "🔹 تقدر تتدرب كل يوم بأكثر من فقرة \n"
+        "🔹 الأسئلة منها الصعب، و الإستنتاجي\n"
+        "🔹 يتغير مستوى الفقرات الجديدة حسب مستواك و اجاباتك\n"
+        "🔹 لازم تدخل على إختبار تحديد المستوى في حال لم تعرف مستواك\n"
+        "🔹 لازم تجاوب بحرف الإختيار فقط و تجمع اجاباتك بهذا الشكل (a b c d) بدون اقواس مع مراعاة مسافة واحدة بين كل اجابة\n"
+        "🔹 الإجابة بتكون من اليسار لليمين، يعني لو اجابتك كده   a b c d   دا معناه ان حرف a اجابة اول سؤال، و حرف b إجابة تاني سؤال، إلخ..\n"
+        "🔹 البوت بيصحح لوحده.\n"
+        "—————————————————\n"
+        "⚠️ -  إخلاء مسؤولية : هذا البوت تم إنشاؤه فقط بغرض التدريب و تطوير المستوى، وليس لأي هدف غير اخلاقي أو غير قانوني\n\n"
+        "🚫 - يمنع منعاً باتاً النسخ او التحويل من البوت..\n\n"
+        "💬 في حال حدوث اعطال تواصل مع الدعم @doctorsenglishbot\n\n"
+        "🏛 - القناة الأساسية : https://t.me/ElDocEnglish\n\n"
+        "🕊 - نرجو منكم النشر في كل مكان...   رابط البوت : https://t.me/DE_Reading_bot\n\n"
+        "🩶 صنع بحب (بهزر صنع بكل تعب و زهق و قرف) بواسطة @abh5en, سبحان الله و بحمده... سبحان الله العظيم 🩶\n\n"
+        "————————————————\n\n"
+        "🔺 جميع الحقوق محفوظة لقناة Doctors English🔻\n"
+        "————————————————"
     )
 
     levels_message = (
@@ -257,7 +275,7 @@ def get_static_placement_passage(level):
 
 async def send_placement_passage(update, context, level, user_state):
     await safe_send(update, f"📤 جاري إرسال فقرة مستوى {level} التأسيسية، اتقل علينا خمسة🤌...")
-    await update.message.reply_chat_action("typing")
+    await update.message.chat.send_action("typing")
     data = get_static_placement_passage(level)
     if not data or "answers" not in data or not data["answers"]:
         await safe_send(update, "❌ حدث خطأ أثناء إنشاء الفقرة. حاول مرة أخرى. لو استمرت المشكلة كلم الدعم.")
@@ -266,10 +284,9 @@ async def send_placement_passage(update, context, level, user_state):
     user_state["pending_data"] = data
     await send_ready_question(update)
 
-
 async def send_training_passage(update, context, level, user_state):
     await safe_send(update, f"📤 تدريب جديد لمستوى {level} ، ثواني و يكون عندك..")
-    await update.message.reply_chat_action("typing")
+    await update.message.chat.send_action("typing")
     try:
         data = await generate_training_passage(level)
     except Exception as e:
@@ -316,7 +333,7 @@ user_states = {}
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
-    user_id = str(user.id)
+    user_id = int(user.id)
     username = user.username or ""
     name = f"{user.first_name or ''} {user.last_name or ''}".strip()
     save_user(user_id, username, name)
