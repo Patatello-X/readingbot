@@ -4,7 +4,7 @@ import asyncio
 import re
 
 API_KEY = os.getenv("API_KEY")
-MODEL = "z-ai/glm-4.5-air:free"
+MODEL = "qwen/qwen3-coder:free"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 headers = {
@@ -93,3 +93,4 @@ Answer: A
         "questions": questions,
         "answers": answers
     }
+
