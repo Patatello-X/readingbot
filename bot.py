@@ -126,7 +126,7 @@ def send_new_user_notification(user):
         logging.warning(f"Notification failed: {str(e)}")
 # -------------------------------------------------
 
-async def check_channel_membership(update: Update):
+async def check_channel_membership(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     if user_id == ADMIN_ID:
         return True
@@ -134,7 +134,7 @@ async def check_channel_membership(update: Update):
     if not channel_id.startswith("@"):
         channel_id = "@" + channel_id
     try:
-        member = await update.message.bot.get_chat_member(chat_id=channel_id, user_id=user_id)
+        member = await context.bot.get_chat_member(chat_id=channel_id, user_id=user_id)
         if getattr(member, "status", None) in ["member", "administrator", "creator", "owner"]:
             return True
         return False
@@ -559,6 +559,7 @@ if __name__ == "__main__":
             loop.run_forever()
         else:
             raise
+
 
 
 
