@@ -38,7 +38,7 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "A2",
-        "paragraph": "I went to the supermarket yesterday. I needed to buy some milk and bread for breakfast. When I was there, I also saw some fresh apples and bananas, so I decided to buy them too. [...]",
+        "paragraph": "I went to the supermarket yesterday. I needed to buy some milk and bread for breakfast. When I was there, I also saw some fresh apples and bananas, so I decided to buy them too. The supermarket was very busy, and it took me a long time to get to the checkout counter.",
         "questions": [
             "1. When did the person go to the supermarket?\na) Today\nb) Tomorrow\nc) Yesterday",
             "2. What did they need to buy for breakfast?\na) Juice and eggs\nb) Milk and bread\nc) Cereal and coffee",
@@ -50,7 +50,7 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "B1",
-        "paragraph": "Sarah is planning her summer vacation. She wants to visit a new country. She has narrowed down her choices to two places: Spain and Greece. She loves the idea of exploring histor[...]",
+        "paragraph": "Sarah is planning her summer vacation. She wants to visit a new country. She has narrowed down her choices to two places: Spain and Greece. She loves the idea of exploring historic ruins in Greece, but she is also attracted to the beautiful beaches in Spain. She has a limited budget, so she needs to research flight and hotel prices carefully before making a final decision.",
         "questions": [
             "1. What is Sarah planning?\na) A new job\nb) Her summer vacation\nc) A party",
             "2. How many countries is she considering?\na) One\nb) Two\nc) Three",
@@ -62,7 +62,7 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "B2",
-        "paragraph": "The global push for renewable energy sources has gained significant momentum in recent years. Solar and wind power are now competitive with traditional fossil fuels in many regio[...]",
+        "paragraph": "The global push for renewable energy sources has gained significant momentum in recent years. Solar and wind power are now competitive with traditional fossil fuels in many regions. However, a major challenge remains: the intermittency of these sources. The sun doesn't always shine and the wind doesn't always blow. Consequently, developing efficient energy storage solutions, such as large-scale batteries, is crucial for a truly sustainable energy future.",
         "questions": [
             "1. What has gained momentum recently?\na) The use of fossil fuels\nb) The global push for renewable energy\nc) Tourism",
             "2. Which renewable sources are mentioned?\na) Hydropower and geothermal\nb) Solar and wind power\nc) Biomass and nuclear",
@@ -74,7 +74,7 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "C1",
-        "paragraph": "The novel \"1984\" by George Orwell serves as a powerful and enduring critique of totalitarianism. It explores themes of government surveillance, psychological manipulation, and [...]",
+        "paragraph": "The novel \"1984\" by George Orwell serves as a powerful and enduring critique of totalitarianism. It explores themes of government surveillance, psychological manipulation, and the erosion of truth. The concept of \"Big Brother\" has become a cultural shorthand for a controlling, oppressive authority. Orwell’s masterful use of dystopian imagery and a chillingly plausible future continues to resonate with readers, prompting them to reflect on the nature of power and individual freedom in their own societies.",
         "questions": [
             "1. What is \"1984\" a critique of?\na) Democracy\nb) Totalitarianism\nc) Capitalism",
             "2. Which of the following is NOT a theme explored in the novel?\na) The importance of family\nb) Government surveillance\nc) The erosion of truth",
@@ -86,12 +86,12 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "C2",
-        "paragraph": "The advent of quantum computing promises to revolutionize fields ranging from cryptography to medicine. Unlike classical computers which use bits representing either 0 or 1, quan[...]",
+        "paragraph": "The advent of quantum computing promises to revolutionize fields ranging from cryptography to medicine. Unlike classical computers which use bits representing either 0 or 1, quantum computers leverage qubits, which can exist in a superposition of both states simultaneously. This allows them to perform complex calculations at an unprecedented speed. While still in its nascent stages, the potential of this technology to solve problems currently intractable for even the most powerful supercomputers is immense, but it also raises profound questions about future security and technological ethics.",
         "questions": [
-            "1. What is a key difference between classical and quantum computers?\na) Classical computers use qubits, quantum computers use bits.\nb) Classical computers use bits, quantum computers us[...]",
-            "2. What allows quantum computers to perform calculations at an unprecedented speed?\na) They are much larger than classical computers.\nb) Their qubits can exist in a superposition of sta[...]",
-            "3. What is the current stage of quantum computing development?\na) It is widely available to the public.\nb) It is still in its early (nascent) stages.\nc) It has been replaced by an even[...]",
-            "4. What is a potential impact of this technology?\na) It will make all old computers obsolete immediately.\nb) It will solve problems that are currently too difficult.\nc) It will only be[...]",
+            "1. What is a key difference between classical and quantum computers?\na) Classical computers use qubits, quantum computers use bits.\nb) Classical computers use bits, quantum computers use qubits.\nc) They both use the same type of processing unit.",
+            "2. What allows quantum computers to perform calculations at an unprecedented speed?\na) They are much larger than classical computers.\nb) Their qubits can exist in a superposition of states.\nc) They use a new type of battery.",
+            "3. What is the current stage of quantum computing development?\na) It is widely available to the public.\nb) It is still in its early (nascent) stages.\nc) It has been replaced by an even newer technology.",
+            "4. What is a potential impact of this technology?\na) It will make all old computers obsolete immediately.\nb) It will solve problems that are currently too difficult.\nc) It will only be used for entertainment.",
             "5. What kind of questions does this technology raise?\na) Questions about grammar and spelling.\nb) Questions about politics and history.\nc) Questions about future security and ethics."
         ],
         "answers": ["b", "b", "b", "b", "c"]
@@ -559,6 +559,7 @@ if __name__ == "__main__":
             loop.run_forever()
         else:
             raise
+
 
 
 
