@@ -24,73 +24,101 @@ if not BOT_TOKEN or not SUPABASE_DB_URL:
     raise ValueError("BOT_TOKEN or SUPABASE_DB_URL are not set!")
 
 PLACEMENT_PASSAGES = [
-    # ... (نفس الفقرات في كودك الأصلي بدون تعديل)
-    # اختصرنا هنا للوضوح
+    {
+        "level": "A1",
+        "paragraph": "This is my friend, Alex. He is from London. Alex likes to eat pizza and he likes to drink water. He has a cat. The cat's name is Leo. Leo is black and white.",
+        "questions": [
+            "1. Where is Alex from?\na) Italy\nb) London\nc) Egypt",
+            "2. What does Alex like to eat?\na) Salad\nb) Pasta\nc) Pizza",
+            "3. What is the cat's name?\na) Alex\nb) Leo\nc) London",
+            "4. What color is the cat?\na) Red and white\nb) Black and white\nc) Brown and white",
+            "5. Does Alex have a dog?\na) Yes\nb) No"
+        ],
+        "answers": ["b", "c", "b", "b", "b"]
+    },
+    {
+        "level": "A2",
+        "paragraph": "I went to the supermarket yesterday. I needed to buy some milk and bread for breakfast. When I was there, I also saw some fresh apples and bananas, so I decided to buy them too. The supermarket was very busy, and it took me a long time to get to the checkout counter.",
+        "questions": [
+            "1. When did the person go to the supermarket?\na) Today\nb) Tomorrow\nc) Yesterday",
+            "2. What did they need to buy for breakfast?\na) Juice and eggs\nb) Milk and bread\nc) Cereal and coffee",
+            "3. What fruit did they buy?\na) Oranges and grapes\nb) Apples and bananas\nc) Pears and peaches",
+            "4. How was the supermarket?\na) Empty\nb) Quiet\nc) Busy",
+            "5. Why did it take a long time to get to the checkout?\na) The person was slow.\nb) The supermarket was very busy.\nc) They got lost."
+        ],
+        "answers": ["c", "b", "b", "c", "b"]
+    },
+    {
+        "level": "B1",
+        "paragraph": "Sarah is planning her summer vacation. She wants to visit a new country. She has narrowed down her choices to two places: Spain and Greece. She loves the idea of exploring historic ruins in Greece, but she is also attracted to the beautiful beaches in Spain. She has a limited budget, so she needs to research flight and hotel prices carefully before making a final decision.",
+        "questions": [
+            "1. What is Sarah planning?\na) A new job\nb) Her summer vacation\nc) A party",
+            "2. How many countries is she considering?\na) One\nb) Two\nc) Three",
+            "3. What does she love the idea of doing in Greece?\na) Swimming in the sea\nb) Visiting family\nc) Exploring historic ruins",
+            "4. What is an important factor in her decision?\na) The weather\nb) The food\nc) Her limited budget",
+            "5. Which country does she think has beautiful beaches?\na) Spain\nb) Greece\nc) Italy"
+        ],
+        "answers": ["b", "b", "c", "c", "a"]
+    },
+    {
+        "level": "B2",
+        "paragraph": "The global push for renewable energy sources has gained significant momentum in recent years. Solar and wind power are now competitive with traditional fossil fuels in many regions. However, a major challenge remains: the intermittency of these sources. The sun doesn't always shine and the wind doesn't always blow. Consequently, developing efficient energy storage solutions, such as large-scale batteries, is crucial for a truly sustainable energy future.",
+        "questions": [
+            "1. What has gained momentum recently?\na) The use of fossil fuels\nb) The global push for renewable energy\nc) Tourism",
+            "2. Which renewable sources are mentioned?\na) Hydropower and geothermal\nb) Solar and wind power\nc) Biomass and nuclear",
+            "3. What is a major challenge for these sources?\na) Their high cost\nb) Their intermittent nature\nc) The lack of technology",
+            "4. Why is the sun not a reliable energy source by itself?\na) It's too hot.\nb) It doesn't always shine.\nc) It's only available in some countries.",
+            "5. What is crucial for a sustainable energy future?\na) Using more fossil fuels\nb) Developing energy storage solutions\nc) Building more power plants"
+        ],
+        "answers": ["b", "b", "b", "b", "b"]
+    },
+    {
+        "level": "C1",
+        "paragraph": "The novel \"1984\" by George Orwell serves as a powerful and enduring critique of totalitarianism. It explores themes of government surveillance, psychological manipulation, and the erosion of truth. The concept of \"Big Brother\" has become a cultural shorthand for a controlling, oppressive authority. Orwell’s masterful use of dystopian imagery and a chillingly plausible future continues to resonate with readers, prompting them to reflect on the nature of power and individual freedom in their own societies.",
+        "questions": [
+            "1. What is \"1984\" a critique of?\na) Democracy\nb) Totalitarianism\nc) Capitalism",
+            "2. Which of the following is NOT a theme explored in the novel?\na) The importance of family\nb) Government surveillance\nc) The erosion of truth",
+            "3. What has \"Big Brother\" become a cultural shorthand for?\na) A loving father\nb) A controlling authority\nc) A famous singer",
+            "4. What literary device does Orwell use effectively?\na) Poetic verse\nb) Dystopian imagery\nc) Romantic metaphors",
+            "5. What does the novel prompt readers to reflect on?\na) The history of Britain\nb) The nature of power and freedom\nc) The origins of the internet"
+        ],
+        "answers": ["b", "a", "b", "b", "b"]
+    },
+    {
+        "level": "C2",
+        "paragraph": "The advent of quantum computing promises to revolutionize fields ranging from cryptography to medicine. Unlike classical computers which use bits representing either 0 or 1, quantum computers leverage qubits, which can exist in a superposition of both states simultaneously. This allows them to perform complex calculations at an unprecedented speed. While still in its nascent stages, the potential of this technology to solve problems currently intractable for even the most powerful supercomputers is immense, but it also raises profound questions about future security and technological ethics.",
+        "questions": [
+            "1. What is a key difference between classical and quantum computers?\na) Classical computers use qubits, quantum computers use bits.\nb) Classical computers use bits, quantum computers use qubits.\nc) They both use the same type of processing unit.",
+            "2. What allows quantum computers to perform calculations at an unprecedented speed?\na) They are much larger than classical computers.\nb) Their qubits can exist in a superposition of states.\nc) They use a new type of battery.",
+            "3. What is the current stage of quantum computing development?\na) It is widely available to the public.\nb) It is still in its early (nascent) stages.\nc) It has been replaced by an even newer technology.",
+            "4. What is a potential impact of this technology?\na) It will make all old computers obsolete immediately.\nb) It will solve problems that are currently too difficult.\nc) It will only be used for entertainment.",
+            "5. What kind of questions does this technology raise?\na) Questions about grammar and spelling.\nb) Questions about politics and history.\nc) Questions about future security and ethics."
+        ],
+        "answers": ["b", "b", "b", "b", "c"]
+    }
 ]
 
 def get_db_conn():
     return psycopg2.connect(SUPABASE_DB_URL, connect_timeout=10)
 
-def save_user(user_id, username, name, level=None):
+def save_user(user_id, username, name):
     now = datetime.utcnow()
     conn = None
     try:
         conn = get_db_conn()
         with conn.cursor() as cur:
-            if level:
-                cur.execute("""
-                INSERT INTO users (user_id, username, name, first_join, last_active, usage_count, level)
-                VALUES (%s, %s, %s, %s, %s, 1, %s)
-                ON CONFLICT (user_id) DO UPDATE SET
-                  username = EXCLUDED.username,
-                  name = EXCLUDED.name,
-                  last_active = EXCLUDED.last_active,
-                  usage_count = users.usage_count + 1,
-                  level = EXCLUDED.level
-                """, (int(user_id), username, name, now, now, level))
-            else:
-                cur.execute("""
-                INSERT INTO users (user_id, username, name, first_join, last_active, usage_count)
-                VALUES (%s, %s, %s, %s, %s, 1)
-                ON CONFLICT (user_id) DO UPDATE SET
-                  username = EXCLUDED.username,
-                  name = EXCLUDED.name,
-                  last_active = EXCLUDED.last_active,
-                  usage_count = users.usage_count + 1
-                """, (int(user_id), username, name, now, now))
+            cur.execute("""
+            INSERT INTO users (user_id, username, name, first_join, last_active, usage_count)
+            VALUES (%s, %s, %s, %s, %s, 1)
+            ON CONFLICT (user_id) DO UPDATE SET
+              username = EXCLUDED.username,
+              name = EXCLUDED.name,
+              last_active = EXCLUDED.last_active,
+              usage_count = users.usage_count + 1
+            """, (int(user_id), username, name, now, now))
         conn.commit()
     except Exception as e:
         logging.error(f"Database error in save_user: {e}")
-    finally:
-        if conn:
-            conn.close()
-
-def get_user_level(user_id):
-    conn = None
-    try:
-        conn = get_db_conn()
-        with conn.cursor() as cur:
-            cur.execute("SELECT level FROM users WHERE user_id = %s", (int(user_id),))
-            row = cur.fetchone()
-            if row and row[0]:
-                return row[0]
-            return None
-    except Exception as e:
-        logging.error(f"Database error in get_user_level: {e}")
-        return None
-    finally:
-        if conn:
-            conn.close()
-
-def update_user_level(user_id, level):
-    conn = None
-    try:
-        conn = get_db_conn()
-        with conn.cursor() as cur:
-            cur.execute("UPDATE users SET level = %s WHERE user_id = %s", (level, int(user_id)))
-        conn.commit()
-    except Exception as e:
-        logging.error(f"Database error in update_user_level: {e}")
     finally:
         if conn:
             conn.close()
@@ -177,7 +205,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = user.id
     username = user.username or ""
     name = f"{user.first_name or ''} {user.last_name or ''}".strip()
-    # حفظ المستخدم بدون مستوى مبدئيًا
     save_user(user_id, username, name)
 
     if not await check_channel_membership(update):
@@ -190,23 +217,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    user_level = get_user_level(user_id)
-    if user_level:
-        # مستخدم قديم، ابدأ معه تدريبات مباشرة
-        user_states[user_id] = {
-            "step": "waiting_ready_training",
-            "level": user_level,
-            "results": {},
-            "waiting": False,
-            "placement_index": 0,
-            "placement_scores": [],
-            "training_history": []
-        }
-        await safe_send(update, f"👋 مرحباً بعودتك!\nمستواك الحالي: {user_level}\nجاهز للتدريب؟")
-        await send_ready_question(update, text="هل أنت جاهز للتدريب ؟")
-        return
-
-# مستخدم جديد (أو لم يحدد مستوى بعد)
     welcome_message = (
         "===🔵~ DOCTORS ENGLISH ~🔵===\n"
         "===🔵{READING ASSISTANT}🔵===\n"
@@ -217,17 +227,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔹 يتغير مستوى الفقرات الجديدة حسب مستواك و اجاباتك\n"
         "🔹 لازم تدخل على إختبار تحديد المستوى في حال لم تعرف مستواك\n"
         "🔹 لازم تجاوب بحرف الإختيار فقط و تجمع اجاباتك بهذا الشكل (a b c d) بدون اقواس مع مراعاة مسافة واحدة بين كل اجابة\n"
-        "🔹 الإجابة بتكون من اليسار لليمين، يعني لو اجابتك كده   a b c d   دا معناه ان حرف a اجابة اول سؤال، و حرف b إجابة ثاني سؤال..\n"
+        "🔹 الإجابة بتكون من اليسار لليمين، يعني لو اجابتك كده   a b c d   دا معناه ان حرف a اجابة اول سؤال، و حرف b إجابة تاني سؤال، إلخ..\n"
         "🔹 البوت بيصحح لوحده.\n"
         "—————————————————\n"
-        "⚠️ -  إخلاء مسؤولية : هذا البوت تم إنشاؤه فقط بغرض التدريب و تطوير المستوى، وليس لأي هدف غير اخلاقي أو غير قانوني\n"
+        "⚠️ -  إخلاء مسؤولية : هذا البوت تم إنشاؤه فقط بغرض التدريب و تطوير المستوى، وليس لأي هدف غير اخلاقي أو غير قانوني\n\n"
         "🚫 - يمنع منعاً باتاً النسخ او التحويل من البوت..\n\n"
         "💬 في حال حدوث اعطال تواصل مع الدعم @doctorsenglishbot\n\n"
         "🏛 - القناة الأساسية : https://t.me/ElDocEnglish\n\n"
         "🕊 - نرجو منكم النشر في كل مكان...   رابط البوت : https://t.me/DE_Reading_bot\n\n"
-        " صنع بحب (بهزر صنع بكل تعب و زهق و قرف)\n\n"
-        " بواسطة : @abh5en\n\n"
-        " 🩶 سبحان الله و بحمده... سبحان الله العظيم  🩶\n\n"
+        "🩶 صنع بحب (بهزر صنع بكل تعب و زهق و قرف) بواسطة @abh5en, سبحان الله و بحمده... سبحان الله العظيم 🩶\n\n"
         "————————————————\n\n"
         "🔺 جميع الحقوق محفوظة لقناة Doctors English🔻\n"
         "————————————————"
@@ -239,7 +247,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔸 A2 - مبتدئ 👽\n"
         "🔸 B1 - نص نص 🐢\n"
         "🔸 B2 - فنان 🎨\n"
-        "🔸 C1 -  معلم شاورما 🗡\n"
+        "🔸 C1 -  معلم شاورما 🗡️\n"
         "🔸 C2 - مواطن امريكي اصلي 🇺🇸\n\n"
         "❓  تعرف انت أي مستوى؟"
     )
@@ -291,7 +299,7 @@ async def send_training_passage(update, context, level, user_state):
     user_state["pending_data"] = data
     user_state["correct_answers"] = data["answers"]
 
-message = f"📖 فقرة المستوى:\n\n{data['paragraph']}\n\n"
+    message = f"📖 فقرة المستوى:\n\n{data['paragraph']}\n\n"
     for i, q in enumerate(data["questions"], 1):
         question_without_answer = re.sub(r'(Answer|الإجابة)\s*[:\-]?.*', '', q, flags=re.IGNORECASE).strip()
         message += f"{question_without_answer}\n\n"
@@ -342,15 +350,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_state = user_states.get(user_id)
     if not user_state:
-        user_level = get_user_level(user_id)
         user_state = {
-            "step": "waiting_ready_training" if user_level else "ask_known_level",
+            "step": "ask_known_level",
             "results": {},
             "waiting": False,
             "placement_index": 0,
             "placement_scores": [],
-            "training_history": [],
-            "level": user_level
+            "training_history": []
         }
         user_states[user_id] = user_state
 
@@ -390,7 +396,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await safe_send(update, 'من فضلك اضغط "جاهز 🚀" عندما تكون مستعدًا.')
             return
 
-if user_state.get("step") in ["testing_answer", "training_answer"]:
+    if user_state.get("step") in ["testing_answer", "training_answer"]:
         data = user_state.get("correct_answers", [])
         user_answers = [a.strip().lower() for a in text.split() if a.strip().lower() in ["a", "b", "c", "d"]]
 
@@ -411,7 +417,7 @@ if user_state.get("step") in ["testing_answer", "training_answer"]:
 
             msg = f"✅ أجبت {score} من {len(data)} صحيحة.\n"
             if correct_list:
-                msg += f"✔️ الإجابات الصحيحة: {', '.join(map(str, correct_list))}\n"
+                msg += f"✔ الإجابات الصحيحة: {', '.join(map(str, correct_list))}\n"
             if wrong_list:
                 msg += f"❌ الإجابات الخاطئة: {', '.join(map(str, wrong_list))}\n"
             msg += "\n______________________________________"
@@ -445,9 +451,6 @@ if user_state.get("step") in ["testing_answer", "training_answer"]:
                 user_state["placement_index"] = 0
                 user_state["pending_data"] = None
 
-                # حدث المستوى في قاعدة البيانات
-                update_user_level(user_id, final_level)
-
                 summary = (
                     f"✅ انتهيت من تقييم المستويات التأسيسية.\n"
                     f"🎯 مستواك النهائي حسب التأسيس: {final_level}\n"
@@ -464,7 +467,7 @@ if user_state.get("step") in ["testing_answer", "training_answer"]:
             level = user_state.get("level", "A1")
             msg = f"✅ أجبت {score} من {len(data)} صحيحة.\n"
             if correct_list:
-                msg += f"✔️ الإجابات الصحيحة: {', '.join(map(str, correct_list))}\n"
+                msg += f"✔ الإجابات الصحيحة: {', '.join(map(str, correct_list))}\n"
             if wrong_list:
                 msg += f"❌ الإجابات الخاطئة: {', '.join(map(str, wrong_list))}\n"
             msg += f"\n🌟 مستواك الحالي: {level}\n"
@@ -477,7 +480,7 @@ if user_state.get("step") in ["testing_answer", "training_answer"]:
             else:
                 result = "hold"
 
-new_level = get_next_level(level, result)
+            new_level = get_next_level(level, result)
             user_state["level"] = new_level
             user_state["training_history"].append({
                 "old_level": old_level,
@@ -486,10 +489,6 @@ new_level = get_next_level(level, result)
             })
             user_state["step"] = "waiting_ready_training"
             user_state["pending_data"] = None
-
-            # تحديث المستوى في قاعدة البيانات إذا تغير
-            if new_level != old_level:
-                update_user_level(user_id, new_level)
 
             if result == "upgrade":
                 msg += f"\n🎉 تم ترقية مستواك من {old_level} إلى {new_level}!"
@@ -524,8 +523,6 @@ new_level = get_next_level(level, result)
         if text.upper() in CEFR_LEVELS:
             user_state["step"] = "training"
             user_state["level"] = text.upper()
-            # حدث المستوى في قاعدة البيانات
-            update_user_level(user_id, text.upper())
             await safe_send(
                 update,
                 f"تم اختيار مستواك: {text.upper()}.\nاستعد للتدريبات!"
@@ -550,7 +547,7 @@ async def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, broadcast_router))
     await app.run_polling()
 
-if name == "main":
+if __name__ == "__main__":
     import asyncio
     try:
         asyncio.run(main())
