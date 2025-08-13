@@ -4,12 +4,12 @@ import asyncio
 import re
 
 API_KEY = os.getenv("API_KEY")
-MODEL = "thudm/glm-4"
-API_URL = "https://api.replicate.com/v1/predictions"
+version = "5c7d5dc6dd8bf75c1acaa8565735e7986bc5b66206b55cca93cb72c9bf15ccaa"
+MODEL = "meta/meta-llama-3-70b-instruct"
 
 
 headers = {
-    "Authorization": f"Bearer {API_KEY}",
+    "Authorization": f"Token {API_KEY}",
     "HTTP-Referer": "https://t.me/eldocenglish",
     "Content-Type": "application/json"
 }
@@ -95,6 +95,7 @@ Answer: A
         "questions": questions,
         "answers": answers
     }
+
 
 
 
