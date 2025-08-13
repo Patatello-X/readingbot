@@ -6,7 +6,6 @@ nest_asyncio.apply()
 import re
 import psycopg2
 import asyncio
-import requests
 from telegram import Update, ReplyKeyboardMarkup, ChatMember
 from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
@@ -16,7 +15,6 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
 CHANNEL_USERNAME = "ElDocEnglish"
 ADMIN_ID = 5172743454
 CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
@@ -599,3 +597,4 @@ if __name__ == "__main__":
             loop.run_forever()
         else:
             raise
+
