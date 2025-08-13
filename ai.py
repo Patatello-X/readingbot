@@ -4,7 +4,7 @@ import asyncio
 import re
 
 API_KEY = os.getenv("API_KEY")
-MODEL = "qwen/qwen3-coder:free"
+MODEL = "z-ai/glm-4.5-air:free"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 headers = {
@@ -68,6 +68,7 @@ Answer: A
             response = await client.post(API_URL, headers=headers, json=payload)
             response.raise_for_status()
             result = response.json()
+            print("API Raw result:", result)
             text = result['choices'][0]['message']['content']
             print("=== API Response ===")
             print(text)
@@ -93,4 +94,5 @@ Answer: A
         "questions": questions,
         "answers": answers
     }
+
 
