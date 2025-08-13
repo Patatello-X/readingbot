@@ -1,10 +1,10 @@
+```python
 import os
 os.environ["TZ"] = "UTC"
 import logging
 import nest_asyncio
 nest_asyncio.apply()
 import re
-import psycopg2
 import asyncio
 from telegram import Update, ReplyKeyboardMarkup, ChatMember
 from telegram.constants import ParseMode
@@ -16,16 +16,13 @@ logging.basicConfig(level=logging.INFO)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_USERNAME = "ElDocEnglish"
-ADMIN_ID = 5172743454
+ADMIN_ID = os.getenv("ADMIN_ID")
 CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
 # إعدادات إشعار دخول المستخدم الجديد
 INFO_BOT_TOKEN = os.getenv("INFO_BOT_TOKEN") or "توكن_بوت_الإشعارات"
 OWNER_ID = int(os.getenv("OWNER_ID") or 123456789)
 BOT_NAME = "بوت القراءة 🧩"
-
-if not BOT_TOKEN or not SUPABASE_DB_URL:
-    raise ValueError("BOT_TOKEN or SUPABASE_DB_URL are not set!")
 
 PLACEMENT_PASSAGES = [
     {
@@ -42,7 +39,7 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "A2",
-        "paragraph": "I went to the supermarket yesterday. I needed to buy some milk and bread for breakfast. When I was there, I also saw some fresh apples and bananas, so I decided to buy them too. The supermarket was very busy, and it took me a long time to get to the checkout counter.",
+        "paragraph": "I went to the supermarket yesterday. I needed to buy some milk and bread for breakfast. When I was there, I also saw some fresh apples and bananas, so I decided to buy them too. [...]",
         "questions": [
             "1. When did the person go to the supermarket?\na) Today\nb) Tomorrow\nc) Yesterday",
             "2. What did they need to buy for breakfast?\na) Juice and eggs\nb) Milk and bread\nc) Cereal and coffee",
@@ -54,7 +51,7 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "B1",
-        "paragraph": "Sarah is planning her summer vacation. She wants to visit a new country. She has narrowed down her choices to two places: Spain and Greece. She loves the idea of exploring historic ruins in Greece, but she is also attracted to the beautiful beaches in Spain. She has a limited budget, so she needs to research flight and hotel prices carefully before making a final decision.",
+        "paragraph": "Sarah is planning her summer vacation. She wants to visit a new country. She has narrowed down her choices to two places: Spain and Greece. She loves the idea of exploring histor[...]",
         "questions": [
             "1. What is Sarah planning?\na) A new job\nb) Her summer vacation\nc) A party",
             "2. How many countries is she considering?\na) One\nb) Two\nc) Three",
@@ -66,7 +63,7 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "B2",
-        "paragraph": "The global push for renewable energy sources has gained significant momentum in recent years. Solar and wind power are now competitive with traditional fossil fuels in many regions. However, a major challenge remains: the intermittency of these sources. The sun doesn't always shine and the wind doesn't always blow. Consequently, developing efficient energy storage solutions, such as large-scale batteries, is crucial for a truly sustainable energy future.",
+        "paragraph": "The global push for renewable energy sources has gained significant momentum in recent years. Solar and wind power are now competitive with traditional fossil fuels in many regio[...]",
         "questions": [
             "1. What has gained momentum recently?\na) The use of fossil fuels\nb) The global push for renewable energy\nc) Tourism",
             "2. Which renewable sources are mentioned?\na) Hydropower and geothermal\nb) Solar and wind power\nc) Biomass and nuclear",
@@ -78,7 +75,7 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "C1",
-        "paragraph": "The novel \"1984\" by George Orwell serves as a powerful and enduring critique of totalitarianism. It explores themes of government surveillance, psychological manipulation, and the erosion of truth. The concept of \"Big Brother\" has become a cultural shorthand for a controlling, oppressive authority. Orwell’s masterful use of dystopian imagery and a chillingly plausible future continues to resonate with readers, prompting them to reflect on the nature of power and individual freedom in their own societies.",
+        "paragraph": "The novel \"1984\" by George Orwell serves as a powerful and enduring critique of totalitarianism. It explores themes of government surveillance, psychological manipulation, and [...]",
         "questions": [
             "1. What is \"1984\" a critique of?\na) Democracy\nb) Totalitarianism\nc) Capitalism",
             "2. Which of the following is NOT a theme explored in the novel?\na) The importance of family\nb) Government surveillance\nc) The erosion of truth",
@@ -90,58 +87,22 @@ PLACEMENT_PASSAGES = [
     },
     {
         "level": "C2",
-        "paragraph": "The advent of quantum computing promises to revolutionize fields ranging from cryptography to medicine. Unlike classical computers which use bits representing either 0 or 1, quantum computers leverage qubits, which can exist in a superposition of both states simultaneously. This allows them to perform complex calculations at an unprecedented speed. While still in its nascent stages, the potential of this technology to solve problems currently intractable for even the most powerful supercomputers is immense, but it also raises profound questions about future security and technological ethics.",
+        "paragraph": "The advent of quantum computing promises to revolutionize fields ranging from cryptography to medicine. Unlike classical computers which use bits representing either 0 or 1, quan[...]",
         "questions": [
-            "1. What is a key difference between classical and quantum computers?\na) Classical computers use qubits, quantum computers use bits.\nb) Classical computers use bits, quantum computers use qubits.\nc) They both use the same type of processing unit.",
-            "2. What allows quantum computers to perform calculations at an unprecedented speed?\na) They are much larger than classical computers.\nb) Their qubits can exist in a superposition of states.\nc) They use a new type of battery.",
-            "3. What is the current stage of quantum computing development?\na) It is widely available to the public.\nb) It is still in its early (nascent) stages.\nc) It has been replaced by an even newer technology.",
-            "4. What is a potential impact of this technology?\na) It will make all old computers obsolete immediately.\nb) It will solve problems that are currently too difficult.\nc) It will only be used for entertainment.",
+            "1. What is a key difference between classical and quantum computers?\na) Classical computers use qubits, quantum computers use bits.\nb) Classical computers use bits, quantum computers us[...]",
+            "2. What allows quantum computers to perform calculations at an unprecedented speed?\na) They are much larger than classical computers.\nb) Their qubits can exist in a superposition of sta[...]",
+            "3. What is the current stage of quantum computing development?\na) It is widely available to the public.\nb) It is still in its early (nascent) stages.\nc) It has been replaced by an even[...]",
+            "4. What is a potential impact of this technology?\na) It will make all old computers obsolete immediately.\nb) It will solve problems that are currently too difficult.\nc) It will only be[...]",
             "5. What kind of questions does this technology raise?\na) Questions about grammar and spelling.\nb) Questions about politics and history.\nc) Questions about future security and ethics."
         ],
         "answers": ["b", "b", "b", "b", "c"]
     }
 ]
 
-def get_db_conn():
-    return psycopg2.connect(SUPABASE_DB_URL, connect_timeout=10)
-
-def save_user(user_id, username, name):
-    now = datetime.utcnow()
-    conn = None
-    try:
-        conn = get_db_conn()
-        with conn.cursor() as cur:
-            cur.execute("""
-            INSERT INTO users (user_id, username, name, first_join, last_active, usage_count)
-            VALUES (%s, %s, %s, %s, %s, 1)
-            ON CONFLICT (user_id) DO UPDATE SET
-              username = EXCLUDED.username,
-              name = EXCLUDED.name,
-              last_active = EXCLUDED.last_active,
-              usage_count = users.usage_count + 1
-            """, (int(user_id), username, name, now, now))
-        conn.commit()
-    except Exception as e:
-        logging.error(f"Database error in save_user: {e}")
-    finally:
-        if conn:
-            conn.close()
-
-def get_all_user_ids():
-    conn = None
-    try:
-        conn = get_db_conn()
-        with conn.cursor() as cur:
-            cur.execute("SELECT user_id FROM users")
-            users = cur.fetchall()
-        return [row[0] for row in users]
-    finally:
-        if conn:
-            conn.close()
-
 # --- إشعار دخول مستخدم جديد (في الذاكرة فقط) ---
 users_set = set()
 def send_new_user_notification(user):
+    import requests
     user_id = user.id
     if user_id in users_set:
         return
@@ -213,7 +174,7 @@ async def handle_broadcast_message(update: Update, context: ContextTypes.DEFAULT
         broadcast_states[user_id] = False
         await safe_send(update, "⏳ جاري إرسال الإذاعة لكل المستخدمين...")
 
-        user_ids = get_all_user_ids()
+        user_ids = list(users_set)
         count = 0
         failed = 0
         for uid in user_ids:
@@ -236,7 +197,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = user.id
     username = user.username or ""
     name = f"{user.first_name or ''} {user.last_name or ''}".strip()
-    save_user(user_id, username, name)
+
+    # إشعار دخول مستخدم جديد (مرة واحدة فقط)
+    send_new_user_notification(user)
 
     # تحقق الاشتراك في القناة
     if not await check_channel_membership(update):
@@ -249,23 +212,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # إشعار دخول مستخدم جديد (مرة واحدة فقط)
-    send_new_user_notification(user)
-
     welcome_message = (
         "===🔵~ DOCTORS ENGLISH ~🔵===\n"
         "===🔵{READING ASSISTANT}🔵===\n"
         "————————————————\n\n"
         "🔹 في البوت تقدر تختبر و تعرف مستواك في اللغة\n"
         "🔹 تقدر تتدرب كل يوم بأكثر من فقرة \n"
-        "🔹 مرحلة اختبار المستوى فقراتها لا تتعدى 200 كلمة و 5 اسئلة، اما فقرات التدريب العادية طول الفقرات تقريبا 400 كلمة و 8 اسئلة منها صعب و استنتاجي.\n"
-        "🔹 يتغير مستوى الفقرات الجديدة حسب مستواك و اجاباتك\n"
+        "🔹 مرحلة اختبار المستوى فقراتها لا تتعدى 200 كلمة و 5 اسئلة، اما فقرات التدريب العادية طول الفقرات تقريبا 400 كلمةو 8 اسئلة، منها الصعب و الإستنتاجي.[...]\n"
+        "🔹 يتغير مستوى الفقرات الجديدة حسب مستواك ، يعني تترقى او تتثبت او تنزل في المستوى حسب اجاباتك\n"
         "🔹 لازم تدخل على إختبار تحديد المستوى في حال لم تعرف مستواك\n"
-        "🔹 لازم تجاوب بحرف الإختيار فقط و تجمع اجاباتك بهذا الشكل (a b c d) بدون اقواس مع مراعاة مسافة واحدة بين كل اجابة\n"
-        "🔹 الإجابة بتكون من اليسار لليمين، يعني لو اجابتك كده   a b c d   دا معناه ان حرف a اجابة اول سؤال، و حرف b إجابة تاني سؤال، إلخ..\n"
+        "🔹 لازم تجاوب بحرف الإختيار فقط و تجمع اجاباتك بهذا الشكل (a b c d) بدون اقواس مع مراعاة مسافة واحدة بين كل اج[...]\n"
+        "🔹 الإجابة بتكون من اليسار لليمين، يعني لو اجابتك كده   a b c d   دا معناه ان حرف a اجابة اول سؤال، و حرف b إجابة[...]\n"
         "🔹 البوت بيصحح لوحده.\n"
         "—————————————————\n"
-        "⚠️ -  إخلاء مسؤولية : هذا البوت تم إنشاؤه فقط بغرض التدريب و تطوير المستوى، وليس لأي هدف غير اخلاقي أو غير قانوني\n\n"
+        "⚠️ -  إخلاء مسؤولية : هذا البوت تم إنشاؤه فقط بغرض التدريب و تطوير المستوى، وليس لأي هدف غير اخلاقي أو غير [...]\n"
         "🚫 - يمنع منعاً باتاً النسخ او التحويل من البوت..\n\n"
         "💬 في حال حدوث اعطال تواصل مع الدعم @doctorsenglishbot\n\n"
         "🏛 - القناة الأساسية : https://t.me/ElDocEnglish\n\n"
@@ -373,7 +333,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = int(user.id)
     username = user.username or ""
     name = f"{user.first_name or ''} {user.last_name or ''}".strip()
-    save_user(user_id, username, name)
+
+    # إشعار دخول مستخدم جديد (مرة واحدة فقط)
+    if user_id not in users_set:
+        send_new_user_notification(user)
 
     if not await check_channel_membership(update):
         await safe_send(
@@ -597,4 +560,4 @@ if __name__ == "__main__":
             loop.run_forever()
         else:
             raise
-
+```
