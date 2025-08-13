@@ -13,6 +13,23 @@ headers = {
     "Content-Type": "application/json"
 }
 
+MAX_TELEGRAM_MSG_LENGTH = 4000  # أقل من الحد الأقصى للاحتياط
+
+def split_message(text, max_length=MAX_TELEGRAM_MSG_LENGTH):
+    """تقسم النص الطويل إلى رسائل لا تتجاوز الحد الأقصى."""
+    lines = text.split('\n')
+    messages = []
+    current = ""
+    for line in lines:
+        # إذا إضافة السطر تجاوز الحد
+        if len(current) + len(line) + 1 > max_length:
+            messages.append(current)
+            current = ""
+        current += line + "\n"
+    if current:
+        messages.append(current)
+    return messages
+
 def extract_answers(text, num_questions):
     pattern = re.compile(r"Answer\s*[:\-]?\s*([A-D])", re.IGNORECASE)
     answers = pattern.findall(text)
@@ -88,9 +105,15 @@ Answer: A
         print("❌ مشكلة في استخراج الأسئلة أو الإجابات من النص.")
         return None
 
+    # جمع الفقرة مع الأسئلة في نص واحد (يمكنك أيضاً إرسالهم بشكل منفصل)
+    all_text = paragraph + "\n\n" + "\n".join(questions)
+
+    # تقسيم الرسالة لتناسب تيليجرام
+    messages = split_message(all_text)
+
     return {
         "paragraph": paragraph,
         "questions": questions,
-        "answers": answers
+        "answers": answers,
+        "messages": messages  # رسائل مقسمة وجاهزة للإرسال
     }
-
