@@ -201,7 +201,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     send_new_user_notification(user)
 
     # تحقق الاشتراك في القناة
-    if not await check_channel_membership(update, context)
+    if not await check_channel_membership(update, context):
         await safe_send(
             update,
             f"🔴 للاستخدام يجب الاشتراك في القناة أولاً:\n\n"
@@ -337,7 +337,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id not in users_set:
         send_new_user_notification(user)
 
-    if not await check_channel_membership(update, context)
+    if not await check_channel_membership(update, context):
         await safe_send(
             update,
             f"🔴 للاستخدام يجب الاشتراك في القناة أولاً:\n\n"
@@ -559,6 +559,7 @@ if __name__ == "__main__":
             loop.run_forever()
         else:
             raise
+
 
 
 
