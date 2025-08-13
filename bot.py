@@ -6,6 +6,7 @@ nest_asyncio.apply()
 import re
 import psycopg2
 import asyncio
+import requests
 from telegram import Update, ReplyKeyboardMarkup, ChatMember
 from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
@@ -19,6 +20,11 @@ SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
 CHANNEL_USERNAME = "ElDocEnglish"
 ADMIN_ID = 5172743454
 CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
+
+# إعدادات إشعار دخول المستخدم الجديد
+INFO_BOT_TOKEN = os.getenv("INFO_BOT_TOKEN") or "توكن_بوت_الإشعارات"
+OWNER_ID = int(os.getenv("OWNER_ID") or 123456789)
+BOT_NAME = "بوت القراءة 🧩"
 
 if not BOT_TOKEN or not SUPABASE_DB_URL:
     raise ValueError("BOT_TOKEN or SUPABASE_DB_URL are not set!")
@@ -135,6 +141,33 @@ def get_all_user_ids():
         if conn:
             conn.close()
 
+# --- إشعار دخول مستخدم جديد (في الذاكرة فقط) ---
+users_set = set()
+def send_new_user_notification(user):
+    user_id = user.id
+    if user_id in users_set:
+        return
+    users_set.add(user_id)
+    username = f"@{user.username}" if user.username else "لا يوجد!"
+    text = (
+        f"٭ تم دخول شخص جديد الى {BOT_NAME}\n"
+        f"٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭\n\n"
+        f"  معلومات المستخدم الجديد:\n\n"
+        f"＃ الاسم : {user.first_name or 'غير معروف'}\n"
+        f"＃ المعرف : {username}\n"
+        f"＃ الايدي :  {user_id}\n"
+        f"٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭٭\n\n"
+        f"٭ عدد اعضاء بوتك الكلي : {len(users_set)}"
+    )
+    try:
+        requests.get(
+            f"https://api.telegram.org/bot{INFO_BOT_TOKEN}/sendMessage",
+            params={"chat_id": OWNER_ID, "text": text}
+        )
+    except Exception as e:
+        logging.warning(f"Notification failed: {str(e)}")
+# -------------------------------------------------
+
 async def check_channel_membership(update: Update):
     user_id = update.message.from_user.id
     if user_id == ADMIN_ID:
@@ -207,6 +240,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     name = f"{user.first_name or ''} {user.last_name or ''}".strip()
     save_user(user_id, username, name)
 
+    # تحقق الاشتراك في القناة
     if not await check_channel_membership(update):
         await safe_send(
             update,
@@ -217,13 +251,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    # إشعار دخول مستخدم جديد (مرة واحدة فقط)
+    send_new_user_notification(user)
+
     welcome_message = (
         "===🔵~ DOCTORS ENGLISH ~🔵===\n"
         "===🔵{READING ASSISTANT}🔵===\n"
         "————————————————\n\n"
         "🔹 في البوت تقدر تختبر و تعرف مستواك في اللغة\n"
         "🔹 تقدر تتدرب كل يوم بأكثر من فقرة \n"
-        "🔹 الأسئلة منها الصعب، و الإستنتاجي\n"
+        "🔹 مرحلة اختبار المستوى فقراتها لا تتعدى 200 كلمة و 5 اسئلة، اما فقرات التدريب العادية طول الفقرات تقريبا 400 كلمة و 8 اسئلة منها صعب و استنتاجي.\n"
         "🔹 يتغير مستوى الفقرات الجديدة حسب مستواك و اجاباتك\n"
         "🔹 لازم تدخل على إختبار تحديد المستوى في حال لم تعرف مستواك\n"
         "🔹 لازم تجاوب بحرف الإختيار فقط و تجمع اجاباتك بهذا الشكل (a b c d) بدون اقواس مع مراعاة مسافة واحدة بين كل اجابة\n"
@@ -235,7 +272,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "💬 في حال حدوث اعطال تواصل مع الدعم @doctorsenglishbot\n\n"
         "🏛 - القناة الأساسية : https://t.me/ElDocEnglish\n\n"
         "🕊 - نرجو منكم النشر في كل مكان...   رابط البوت : https://t.me/DE_Reading_bot\n\n"
-        "🩶 صنع بحب (بهزر صنع بكل تعب و زهق و قرف) بواسطة @abh5en, سبحان الله و بحمده... سبحان الله العظيم 🩶\n\n"
+        "🩶 صنع بحب (بهزر صنع بكل تعب و زهق و قرف) \n\n"
+        "🩶 تم بواسطة : @abh5en      متبعتليش عالخاص... \n\n"
+        "🩶 سبحان الله و بحمده... سبحان الله العظيم 🩶 \n\n"
         "————————————————\n\n"
         "🔺 جميع الحقوق محفوظة لقناة Doctors English🔻\n"
         "————————————————"
