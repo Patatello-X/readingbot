@@ -4,8 +4,9 @@ import asyncio
 import re
 
 API_KEY = os.getenv("API_KEY")
-MODEL = "z-ai/glm-4.5-air:free"
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
+MODEL = "thudm/glm-4"
+API_URL = "https://api.replicate.com/v1/predictions"
+
 
 headers = {
     "Authorization": f"Bearer {API_KEY}",
@@ -94,5 +95,6 @@ Answer: A
         "questions": questions,
         "answers": answers
     }
+
 
 
