@@ -4,12 +4,11 @@ import asyncio
 import re
 
 API_KEY = os.getenv("API_KEY")
-version = "5c7d5dc6dd8bf75c1acaa8565735e7986bc5b66206b55cca93cb72c9bf15ccaa"
-MODEL = "meta/meta-llama-3-70b-instruct"
-
+MODEL = "z-ai/glm-4.5-air:free"
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 headers = {
-    "Authorization": f"Token {API_KEY}",
+    "Authorization": f"Bearer {API_KEY}",
     "HTTP-Referer": "https://t.me/eldocenglish",
     "Content-Type": "application/json"
 }
@@ -69,7 +68,6 @@ Answer: A
             response = await client.post(API_URL, headers=headers, json=payload)
             response.raise_for_status()
             result = response.json()
-            print("API Raw result:", result)
             text = result['choices'][0]['message']['content']
             print("=== API Response ===")
             print(text)
@@ -95,7 +93,4 @@ Answer: A
         "questions": questions,
         "answers": answers
     }
-
-
-
 
